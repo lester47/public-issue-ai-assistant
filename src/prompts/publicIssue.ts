@@ -59,6 +59,26 @@ ${sourceBlock || "沒有可用來源。"}
     "medium": "300 字以內",
     "detailed": "較完整摘要"
   },
+  "stanceGroups": {
+    "blue": {
+      "label": "偏藍營的意見",
+      "conclusions": [
+        {
+          "statement": "1 到 3 個結論，描述偏藍營常見看法；不要人身攻擊",
+          "sourceIds": ["source-1"]
+        }
+      ]
+    },
+    "green": {
+      "label": "偏綠營的意見",
+      "conclusions": [
+        {
+          "statement": "1 到 3 個結論，描述偏綠營常見看法；不要人身攻擊",
+          "sourceIds": ["source-1"]
+        }
+      ]
+    }
+  },
   "timeline": [
     {
       "date": "YYYY-MM-DD 或空字串",

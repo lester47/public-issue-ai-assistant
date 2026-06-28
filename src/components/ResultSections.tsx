@@ -74,6 +74,14 @@ export function ResultSections({
         ) : null}
       </section>
 
+      <section className="stance-section">
+        <p className="eyebrow">兩方論點</p>
+        <div className="stance-grid">
+          <StanceCard group={data.stanceGroups.blue} />
+          <StanceCard group={data.stanceGroups.green} />
+        </div>
+      </section>
+
       <Accordion title="30 秒回答" defaultOpen>
         <p>{data.thirtySeconds}</p>
       </Accordion>
@@ -151,6 +159,31 @@ function Accordion({
       <summary>{title}</summary>
       <div className="accordion-body">{children}</div>
     </details>
+  );
+}
+
+function StanceCard({
+  group
+}: {
+  group: {
+    label: string;
+    conclusions: Array<{ statement: string; sourceIds: string[] }>;
+  };
+}) {
+  return (
+    <article className="stance-card">
+      <h3>{group.label}</h3>
+      <ol>
+        {group.conclusions.slice(0, 3).map((item) => (
+          <li key={item.statement}>
+            <span>{item.statement}</span>
+            {item.sourceIds.length > 0 ? (
+              <small>來源：{item.sourceIds.join(", ")}</small>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    </article>
   );
 }
 

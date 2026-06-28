@@ -37,6 +37,16 @@ export type PositionItem = {
   sourceIds: string[];
 };
 
+export type StanceConclusion = {
+  statement: string;
+  sourceIds: string[];
+};
+
+export type StanceGroup = {
+  label: string;
+  conclusions: StanceConclusion[];
+};
+
 export type PublicIssueAnalysis = {
   topic: string;
   rebuttal: {
@@ -49,6 +59,10 @@ export type PublicIssueAnalysis = {
     }>;
     sentences: string[];
     sourceIds: string[];
+  };
+  stanceGroups: {
+    blue: StanceGroup;
+    green: StanceGroup;
   };
   summary: {
     short: string;

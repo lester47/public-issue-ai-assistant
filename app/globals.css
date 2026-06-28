@@ -371,6 +371,49 @@ a {
   color: var(--muted);
 }
 
+.stance-section {
+  margin: 16px;
+}
+
+.stance-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.stance-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff;
+}
+
+.stance-card h3 {
+  margin: 0 0 8px;
+  color: var(--primary-strong);
+  font-size: 1rem;
+}
+
+.stance-card ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.stance-card li {
+  margin-bottom: 10px;
+  line-height: 1.65;
+}
+
+.stance-card li:last-child {
+  margin-bottom: 0;
+}
+
+.stance-card small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
 .answer-strip p,
 .accordion-body p {
   margin: 0;
@@ -543,6 +586,14 @@ a {
   }
 
   .result-action-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stance-section {
+    margin: 20px;
+  }
+
+  .stance-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 

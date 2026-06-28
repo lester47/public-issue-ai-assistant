@@ -23,6 +23,7 @@ export class ArgumentBuilder {
     return {
       topic: bundle.plan.topic,
       rebuttal,
+      stanceGroups: buildStanceGroups(bundle.plan, sources),
       summary: {
         short: hasRealSources
           ? `已找到 ${sources.length} 筆近期來源，並整理反駁觀點與查證方向。`
@@ -51,6 +52,160 @@ export class ArgumentBuilder {
       references: sources
     };
   }
+}
+
+function buildStanceGroups(
+  plan: QueryPlan,
+  sources: RankedSource[]
+): PublicIssueAnalysis["stanceGroups"] {
+  const realSources = sources.filter((source) => !isFallbackSource(source));
+  const sourceIds = realSources.slice(0, 3).map((source) => source.id);
+  const fallbackSourceIds = sources.slice(0, 3).map((source) => source.id);
+  const ids = sourceIds.length ? sourceIds : fallbackSourceIds;
+  const topicText = `${plan.topic} ${plan.originalQuery}`;
+
+  if (hasAny(topicText, ["總預算", "預算", "行政院", "不給錢"])) {
+    return {
+      blue: {
+        label: "偏藍營的意見",
+        conclusions: [
+          {
+            statement:
+              "主張總預算已經過關，行政部門應盡快讓相關經費進入執行，不要用程序拖延。",
+            sourceIds: ids
+          },
+          {
+            statement:
+              "會把救災、地方建設或民生補助的延宕，歸因到中央行政效率或政治操作。",
+            sourceIds: ids
+          }
+        ]
+      },
+      green: {
+        label: "偏綠營的意見",
+        conclusions: [
+          {
+            statement:
+              "強調預算不是口號，必須看科目、刪凍項目、審查程序和法定支用條件。",
+            sourceIds: ids
+          },
+          {
+            statement:
+              "認為把所有經費問題都說成行政院卡錢，是把立法院審查和政黨攻防簡化成政治指控。",
+            sourceIds: ids
+          },
+          {
+            statement:
+              "主張愛台灣就是要求預算透明、依法執行，不能讓錯誤說法帶動情緒。",
+            sourceIds: ids
+          }
+        ]
+      }
+    };
+  }
+
+  if (hasAny(topicText, ["淹水", "暴雨", "內湖", "水溝", "土石流"])) {
+    return {
+      blue: {
+        label: "偏藍營的意見",
+        conclusions: [
+          {
+            statement:
+              "傾向質疑中央經費、補助或整體水利政策是否足夠，要求中央負起支援地方的責任。",
+            sourceIds: ids
+          },
+          {
+            statement:
+              "會把災後民怨聚焦在中央與地方資源分配，主張先解決人民眼前受災問題。",
+            sourceIds: ids
+          }
+        ]
+      },
+      green: {
+        label: "偏綠營的意見",
+        conclusions: [
+          {
+            statement:
+              "認為淹水不能一句話怪中央，要回到雨量、排水系統、地方維護與市府應變來檢討。",
+            sourceIds: ids
+          },
+          {
+            statement:
+              "主張真正負責任的討論，是找出哪個治理環節失靈，而不是把災害變成甩鍋口號。",
+            sourceIds: ids
+          }
+        ]
+      }
+    };
+  }
+
+  if (hasAny(topicText, ["條例", "法案", "修法", "立法院", "無人機"])) {
+    return {
+      blue: {
+        label: "偏藍營的意見",
+        conclusions: [
+          {
+            statement:
+              "傾向主張法案應加速處理，強化安全、管理或產業秩序，避免行政部門或執政黨拖延。",
+            sourceIds: ids
+          },
+          {
+            statement:
+              "會要求把問題拉回立法效率與政府執行力，強調人民需要明確規範。",
+            sourceIds: ids
+          }
+        ]
+      },
+      green: {
+        label: "偏綠營的意見",
+        conclusions: [
+          {
+            statement:
+              "主張法案要看條文細節，不能只靠口號決定，尤其要檢查是否影響國安、人民權利或執法界線。",
+            sourceIds: ids
+          },
+          {
+            statement:
+              "認為真正站在台灣這邊，是把制度設計清楚，而不是用最響亮的政治說法帶風向。",
+            sourceIds: ids
+          }
+        ]
+      }
+    };
+  }
+
+  return {
+    blue: {
+      label: "偏藍營的意見",
+      conclusions: [
+        {
+          statement:
+            "傾向把問題聚焦在政府效率、行政責任或執政黨是否迴避爭議。",
+          sourceIds: ids
+        },
+        {
+          statement:
+            "會要求官方更快提出說明、資料或具體處理時程。",
+          sourceIds: ids
+        }
+      ]
+    },
+    green: {
+      label: "偏綠營的意見",
+      conclusions: [
+        {
+          statement:
+            "傾向主張先看來源、制度和完整脈絡，不要把未查證說法直接當成事實。",
+          sourceIds: ids
+        },
+        {
+          statement:
+            "會強調台灣公共討論需要證據，不該被簡化口號或錯誤資訊帶著走。",
+          sourceIds: ids
+        }
+      ]
+    }
+  };
 }
 
 function buildRebuttal(

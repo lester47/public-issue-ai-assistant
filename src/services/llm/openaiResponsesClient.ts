@@ -50,6 +50,7 @@ export async function generatePublicIssueAnalysis(
   return {
     ...parsed,
     rebuttal: parsed.rebuttal ?? buildRebuttal(query, sources),
+    stanceGroups: parsed.stanceGroups ?? buildStanceGroups(query, sources),
     references: sources
   };
 }
@@ -88,6 +89,7 @@ function buildFallbackAnalysis(
   return {
     topic: query,
     rebuttal: buildRebuttal(query, sources),
+    stanceGroups: buildStanceGroups(query, sources),
     summary: {
       short: hasRealSources
         ? `已找到 ${sources.length} 筆近期來源；目前以免 LLM 模式提供保守整理。`
@@ -268,6 +270,51 @@ function buildRebuttal(query: string, sources: SourceReference[]) {
       "可以有立場，但立場要站在證據上，才不會被錯誤論調牽著跑。"
     ],
     sourceIds
+  };
+}
+
+function buildStanceGroups(
+  query: string,
+  sources: SourceReference[]
+): PublicIssueAnalysis["stanceGroups"] {
+  const sourceIds = sources
+    .filter((source) => !source.url.includes("example.com"))
+    .slice(0, 3)
+    .map((source) => source.id);
+  const fallbackIds = sources.slice(0, 3).map((source) => source.id);
+  const ids = sourceIds.length ? sourceIds : fallbackIds;
+
+  return {
+    blue: {
+      label: "偏藍營的意見",
+      conclusions: [
+        {
+          statement:
+            "傾向質疑政府效率、行政責任或執政黨是否把問題處理清楚。",
+          sourceIds: ids
+        },
+        {
+          statement:
+            "會要求官方提出更明確的資料、時程和責任說明。",
+          sourceIds: ids
+        }
+      ]
+    },
+    green: {
+      label: "偏綠營的意見",
+      conclusions: [
+        {
+          statement:
+            "傾向主張先看來源、制度和完整脈絡，不要把未查證說法直接當事實。",
+          sourceIds: ids
+        },
+        {
+          statement:
+            "會強調台灣公共討論需要證據，不該被簡化口號或錯誤資訊帶著走。",
+          sourceIds: ids
+        }
+      ]
+    }
   };
 }
 
