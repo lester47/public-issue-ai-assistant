@@ -432,6 +432,41 @@ a {
   color: var(--muted);
 }
 
+.more-details {
+  border-top: 1px solid var(--line);
+}
+
+.more-details > summary {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  color: var(--primary-strong);
+  background: #f8fbfa;
+  font-weight: 900;
+  cursor: pointer;
+  list-style: none;
+}
+
+.more-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.more-details > summary::after {
+  content: "+";
+  margin-left: 8px;
+  font-size: 1.2rem;
+}
+
+.more-details[open] > summary::after {
+  content: "-";
+}
+
+.more-details-body .accordion:first-child {
+  border-top: 0;
+}
+
 .answer-strip p,
 .accordion-body p {
   margin: 0;

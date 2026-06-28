@@ -82,65 +82,70 @@ export function ResultSections({
         </div>
       </section>
 
-      <Accordion title="30 秒回答" defaultOpen>
-        <p>{data.thirtySeconds}</p>
-      </Accordion>
+      <details className="more-details">
+        <summary>查看更多來源與細節</summary>
+        <div className="more-details-body">
+          <Accordion title="30 秒回答">
+            <p>{data.thirtySeconds}</p>
+          </Accordion>
 
-      <Accordion title="事件摘要" defaultOpen>
-        <p>{data.summary.medium}</p>
-      </Accordion>
+          <Accordion title="事件摘要">
+            <p>{data.summary.medium}</p>
+          </Accordion>
 
-      <Accordion title="最近進度">
-        {data.timeline.length > 0 ? (
-          <ol className="timeline">
-            {data.timeline.map((item, index) => (
-              <li key={`${item.title}-${index}`}>
-                <span>{item.date || "日期待確認"}</span>
-                <strong>{item.title}</strong>
-                <p>{item.description}</p>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p>目前來源不足，尚未整理出可靠時間線。</p>
-        )}
-      </Accordion>
+          <Accordion title="最近進度">
+            {data.timeline.length > 0 ? (
+              <ol className="timeline">
+                {data.timeline.map((item, index) => (
+                  <li key={`${item.title}-${index}`}>
+                    <span>{item.date || "日期待確認"}</span>
+                    <strong>{item.title}</strong>
+                    <p>{item.description}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p>目前來源不足，尚未整理出可靠時間線。</p>
+            )}
+          </Accordion>
 
-      <Accordion title="已確認事實">
-        <FactList items={data.facts} />
-      </Accordion>
+          <Accordion title="已確認事實">
+            <FactList items={data.facts} />
+          </Accordion>
 
-      <Accordion title="待查證">
-        <FactList items={data.uncertain} />
-      </Accordion>
+          <Accordion title="待查證">
+            <FactList items={data.uncertain} />
+          </Accordion>
 
-      <Accordion title="主要觀點">
-        {data.positions.length > 0 ? (
-          <div className="position-list">
-            {data.positions.map((item, index) => (
-              <article key={`${item.actor}-${index}`}>
-                <h3>{item.actor}</h3>
-                <p>{item.position}</p>
-                {item.reasons.length > 0 ? (
-                  <ul>
-                    {item.reasons.map((reason) => (
-                      <li key={reason}>{reason}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        ) : (
-          <p>目前來源不足，尚未整理出可歸因的主要觀點。</p>
-        )}
-      </Accordion>
+          <Accordion title="主要觀點">
+            {data.positions.length > 0 ? (
+              <div className="position-list">
+                {data.positions.map((item, index) => (
+                  <article key={`${item.actor}-${index}`}>
+                    <h3>{item.actor}</h3>
+                    <p>{item.position}</p>
+                    {item.reasons.length > 0 ? (
+                      <ul>
+                        {item.reasons.map((reason) => (
+                          <li key={reason}>{reason}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p>目前來源不足，尚未整理出可歸因的主要觀點。</p>
+            )}
+          </Accordion>
 
-      <Accordion title="詳細回答">
-        <p>{data.fullAnswer}</p>
-      </Accordion>
+          <Accordion title="詳細回答">
+            <p>{data.fullAnswer}</p>
+          </Accordion>
 
-      <SourceList sources={data.references} />
+          <SourceList sources={data.references} />
+        </div>
+      </details>
     </section>
   );
 }
