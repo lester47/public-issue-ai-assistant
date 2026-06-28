@@ -77,8 +77,8 @@ export function ResultSections({
       <section className="stance-section">
         <p className="eyebrow">兩方論點</p>
         <div className="stance-grid">
-          <StanceCard group={data.stanceGroups.blue} />
-          <StanceCard group={data.stanceGroups.green} />
+          <StanceCard group={data.stanceGroups.blue} tone="blue" />
+          <StanceCard group={data.stanceGroups.green} tone="green" />
         </div>
       </section>
 
@@ -163,15 +163,17 @@ function Accordion({
 }
 
 function StanceCard({
-  group
+  group,
+  tone
 }: {
   group: {
     label: string;
     conclusions: Array<{ statement: string; sourceIds: string[] }>;
   };
+  tone: "blue" | "green";
 }) {
   return (
-    <article className="stance-card">
+    <article className={`stance-card ${tone}`}>
       <h3>{group.label}</h3>
       <ol>
         {group.conclusions.slice(0, 3).map((item) => (

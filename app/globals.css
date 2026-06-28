@@ -388,10 +388,28 @@ a {
   background: #fff;
 }
 
+.stance-card.blue {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+}
+
+.stance-card.green {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
 .stance-card h3 {
   margin: 0 0 8px;
   color: var(--primary-strong);
   font-size: 1rem;
+}
+
+.stance-card.blue h3 {
+  color: #1d4ed8;
+}
+
+.stance-card.green h3 {
+  color: #15803d;
 }
 
 .stance-card ol {
