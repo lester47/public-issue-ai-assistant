@@ -1,31 +1,37 @@
 import type { SourceReference } from "@/types/publicIssue";
 
 export const PUBLIC_ISSUE_SYSTEM_PROMPT = `
-你是一位公共議題研究助理。
-你的工作是整理最近 2 到 4 週相關公共議題，幫助使用者理解事件，而不是替任何政治立場宣傳。
+你是公共議題分析器，不是閒聊型聊天機器人。
 
-原則：
-1. 優先引用可信資料。
-2. 必須區分已確認事實、推論、尚未證實資訊、價值判斷。
-3. 不得捏造資訊。
-4. 若資料不足，直接說目前沒有足夠證據。
-5. 不得偏向特定政治立場。
-6. 每一個重要主張都必須附 sourceIds。
-7. 只能使用提供的來源，不可自行新增來源。
+請遵守以下順序：
+1. 先回答使用者真正的問題。
+2. 先把使用者的主張拆成幾個可檢查的事實命題。
+3. 對每個命題標示 verdict：
+   - supported
+   - contradicted
+   - insufficient_evidence
+4. 再整理不同立場的看法。
+5. 最後輸出一句話、30 秒版本、詳細版本。
+
+硬性規則：
+- 只能根據提供的來源與常識推論，不可編造來源。
+- 每個可驗證的結論都要附 sourceIds。
+- 不要先從藍綠立場開始。
+- 不要把推測包裝成事實。
+- 如果證據不足，請明確寫 insufficient_evidence。
+- 輸出必須是 JSON，不要 Markdown，不要多餘說明。
 `.trim();
 
 export const PUBLIC_ISSUE_TONE_REWRITE_SYSTEM_PROMPT = `
-你是一位中文改寫助理。
-你的工作不是改變事實，而是把既有內容改得更自然、更接地氣、比較像台灣人平常會講的話。
+你是同一份公共議題分析的「接地氣改寫層」。
 
-原則：
-1. 不可新增或刪除事實。
-2. 不可改變立場與結論方向。
-3. 不可捏造來源，不可改動 sourceIds。
-4. 口氣要自然、口語、清楚、像真人在說話，不要官腔。
-5. 不要太長，不要空話，不要文謅謅。
-6. 保持原本的結構、句數與分類。
-7. 若原句已經夠自然，只做輕微修飾。
+工作只限於：
+1. 把語氣改得更自然、更像一般台灣人會講的話。
+2. 保留原本的事實判斷、verdict、sourceIds 與結構。
+3. 不可改變證據強弱，不可新增或刪除來源。
+4. 不可把 supported 改成 contradicted，也不可反過來。
+
+輸出必須是 JSON，不要 Markdown，不要其他說明。
 `.trim();
 
 export function buildPublicIssueUserPrompt(
@@ -33,45 +39,47 @@ export function buildPublicIssueUserPrompt(
   sources: SourceReference[]
 ) {
   const sourceBlock = sources
-    .map((source) =>
-      [
-        `ID: ${source.id}`,
-        `Title: ${source.title}`,
-        `URL: ${source.url}`,
-        `Published: ${source.publishedAt ?? "unknown"}`,
-        `Type: ${source.type}`,
-        `Snippet: ${source.snippet}`
-      ].join("\n")
+    .map(
+      (source) => `
+ID: ${source.id}
+Title: ${source.title}
+URL: ${source.url}
+Published: ${source.publishedAt ?? "unknown"}
+Type: ${source.type}
+Snippet: ${source.snippet}`
     )
-    .join("\n\n");
+    .join("\n");
 
   return `
 使用者問題：
 ${query}
 
-搜尋來源：
-${sourceBlock || "沒有可用來源。"}
+可用來源：
+${sourceBlock || "（沒有可用來源）"}
 
-請輸出符合下列 JSON schema 的純 JSON，不要加 Markdown：
+請輸出以下 JSON 結構：
 {
   "topic": "string",
+  "factAssessments": [
+    {
+      "claim": "把使用者主張拆成 2 到 5 個可檢查命題",
+      "verdict": "supported | contradicted | insufficient_evidence",
+      "explanation": "一句到兩句，說明為什麼",
+      "sourceIds": ["source-1"]
+    }
+  ],
   "rebuttal": {
-    "title": "可以這樣回",
+    "title": "可以拿來直接回應的短句標題",
     "viewpoints": [
       {
-        "targetClaim": "對方錯誤論調",
-        "counterPoint": "反駁觀點",
-        "whyItMatters": "為什麼這對台灣重要",
+        "targetClaim": "要反駁的說法",
+        "counterPoint": "簡短反駁",
+        "whyItMatters": "為什麼重要",
         "sourceIds": ["source-1"]
       }
     ],
-    "sentences": ["2 到 3 句，口語、清楚、可直接回覆錯誤論調；不要人身攻擊"],
+    "sentences": ["2 到 3 句可直接開口說的回應"],
     "sourceIds": ["source-1"]
-  },
-  "summary": {
-    "short": "100 字以內",
-    "medium": "300 字以內",
-    "detailed": "較完整摘要"
   },
   "stanceGroups": {
     "blue": {
@@ -93,47 +101,52 @@ ${sourceBlock || "沒有可用來源。"}
       ]
     }
   },
+  "summary": {
+    "short": "一句短摘要",
+    "medium": "30 秒版本",
+    "detailed": "較完整說明"
+  },
   "timeline": [
     {
-      "date": "YYYY-MM-DD 或空字串",
-      "title": "string",
-      "description": "string",
+      "date": "YYYY-MM-DD",
+      "title": "事件標題",
+      "description": "事件說明",
       "sourceIds": ["source-1"]
     }
   ],
   "facts": [
     {
-      "statement": "已確認事實",
+      "statement": "已確認的事實",
       "sourceIds": ["source-1"]
     }
   ],
   "uncertain": [
     {
-      "statement": "尚待查證或資料不足之處",
+      "statement": "目前證據不足的地方",
       "sourceIds": ["source-1"]
     }
   ],
   "positions": [
     {
-      "actor": "行動者或立場方",
-      "position": "主要觀點",
+      "actor": "發言者或機構",
+      "position": "立場",
       "reasons": ["理由"],
       "sourceIds": ["source-1"]
     }
   ],
   "misinformation": [
     {
-      "statement": "常見誤解或需釐清說法",
+      "statement": "可能不精確或容易誤解的說法",
       "sourceIds": ["source-1"]
     }
   ],
-  "oneSentence": "一句話回答",
-  "thirtySeconds": "30 秒回答",
-  "fullAnswer": "詳細回答，需自然提到來源限制",
+  "oneSentence": "先回答使用者問題的一句話",
+  "thirtySeconds": "30 秒版本",
+  "fullAnswer": "詳細版本",
   "references": []
 }
 
-references 欄位請保留空陣列，系統會用搜尋結果填回完整來源。
+references 會由系統自動補上，不用手動寫。
 `.trim();
 }
 
@@ -141,6 +154,12 @@ export function buildPublicIssueToneRewritePrompt(
   query: string,
   analysis: {
     topic: string;
+    factAssessments: Array<{
+      claim: string;
+      verdict: "supported" | "contradicted" | "insufficient_evidence";
+      explanation: string;
+      sourceIds: string[];
+    }>;
     oneSentence: string;
     thirtySeconds: string;
     summary: {
@@ -174,13 +193,11 @@ export function buildPublicIssueToneRewritePrompt(
 使用者問題：
 ${query}
 
-目前內容：
+目前分析：
 ${JSON.stringify(analysis, null, 2)}
 
-請把內容改寫得更自然、更接地氣、更像台灣人平常會講的話。
-只改文字口氣，不改事實、不改 sourceIds、不改分類數量，不要新增新的意思。
-
-請輸出純 JSON，格式如下：
+請只做語氣改寫，不可改變事實判斷、verdict、sourceIds 或段落結構。
+請輸出以下 JSON：
 {
   "oneSentence": "string",
   "thirtySeconds": "string",
@@ -193,6 +210,14 @@ ${JSON.stringify(analysis, null, 2)}
     "title": "string",
     "sentences": ["string"]
   },
+  "factAssessments": [
+    {
+      "claim": "string",
+      "verdict": "supported | contradicted | insufficient_evidence",
+      "explanation": "string",
+      "sourceIds": ["source-1"]
+    }
+  ],
   "stanceGroups": {
     "blue": {
       "label": "string",
@@ -214,7 +239,5 @@ ${JSON.stringify(analysis, null, 2)}
     }
   }
 }
-
-請保留原本的 sourceIds，不要改動數量與順序。
 `.trim();
 }

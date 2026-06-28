@@ -1,6 +1,6 @@
 "use client";
 
-import type { AnalyzeIssueResponse } from "@/types/publicIssue";
+import type { AnalyzeIssueResponse, FactAssessment } from "@/types/publicIssue";
 import { SourceList } from "./SourceList";
 
 type ResultSectionsProps = {
@@ -58,7 +58,7 @@ export function ResultSections({
                   onClick={onRetry}
                   disabled={isRetrying}
                 >
-                  {isRetrying ? "重新搜尋中" : "重新搜尋來源"}
+                  {isRetrying ? "重新搜尋中..." : "重新搜尋來源"}
                 </button>
               )
             ) : null}
@@ -66,8 +66,17 @@ export function ResultSections({
         ) : null}
       </div>
 
+      <section className="fact-check-section">
+        <p className="eyebrow">先看事實</p>
+        <div className="fact-check-grid">
+          {data.factAssessments.map((item, index) => (
+            <FactAssessmentCard key={`${item.claim}-${index}`} item={item} />
+          ))}
+        </div>
+      </section>
+
       <section className="rebuttal-box">
-        <p className="eyebrow">一句話結論</p>
+        <p className="eyebrow">可以直接回的話</p>
         <p className="rebuttal-conclusion">{rebuttalConclusion}</p>
         {data.rebuttal.sourceIds.length > 0 ? (
           <small>來源：{data.rebuttal.sourceIds.join(", ")}</small>
@@ -75,7 +84,7 @@ export function ResultSections({
       </section>
 
       <section className="stance-section">
-        <p className="eyebrow">兩方論點</p>
+        <p className="eyebrow">不同立場</p>
         <div className="stance-grid">
           <StanceCard group={data.stanceGroups.blue} tone="blue" />
           <StanceCard group={data.stanceGroups.green} tone="green" />
@@ -85,11 +94,11 @@ export function ResultSections({
       <details className="more-details">
         <summary>查看更多來源與細節</summary>
         <div className="more-details-body">
-          <Accordion title="30 秒回答">
+          <Accordion title="30 秒版本">
             <p>{data.thirtySeconds}</p>
           </Accordion>
 
-          <Accordion title="事件摘要">
+          <Accordion title="摘要">
             <p>{data.summary.medium}</p>
           </Accordion>
 
@@ -105,7 +114,7 @@ export function ResultSections({
                 ))}
               </ol>
             ) : (
-              <p>目前來源不足，尚未整理出可靠時間線。</p>
+              <p>目前還沒有足夠的時間軸資料。</p>
             )}
           </Accordion>
 
@@ -135,7 +144,7 @@ export function ResultSections({
                 ))}
               </div>
             ) : (
-              <p>目前來源不足，尚未整理出可歸因的主要觀點。</p>
+              <p>目前還沒有足夠的立場資料。</p>
             )}
           </Accordion>
 
@@ -165,6 +174,32 @@ function Accordion({
       <div className="accordion-body">{children}</div>
     </details>
   );
+}
+
+function FactAssessmentCard({ item }: { item: FactAssessment }) {
+  return (
+    <article className={`fact-assessment ${item.verdict}`}>
+      <div className="fact-assessment-head">
+        <span className="fact-assessment-badge">{verdictLabel(item.verdict)}</span>
+        <p>{item.claim}</p>
+      </div>
+      <p className="fact-assessment-body">{item.explanation}</p>
+      {item.sourceIds.length > 0 ? (
+        <small>來源：{item.sourceIds.join(", ")}</small>
+      ) : null}
+    </article>
+  );
+}
+
+function verdictLabel(verdict: FactAssessment["verdict"]) {
+  switch (verdict) {
+    case "supported":
+      return "支持";
+    case "contradicted":
+      return "反駁";
+    default:
+      return "證據不足";
+  }
 }
 
 function StanceCard({
@@ -200,7 +235,7 @@ function FactList({
   items: Array<{ statement: string; sourceIds: string[] }>;
 }) {
   if (items.length === 0) {
-    return <p>目前來源不足，尚未能確認。</p>;
+    return <p>目前還沒有足夠的查證項目。</p>;
   }
 
   return (

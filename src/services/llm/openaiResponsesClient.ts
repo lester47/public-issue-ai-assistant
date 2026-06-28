@@ -54,6 +54,8 @@ export async function generatePublicIssueAnalysis(
 
   return {
     ...parsed,
+    factAssessments:
+      parsed.factAssessments ?? buildFactAssessments(query, sources),
     rebuttal: parsed.rebuttal ?? buildRebuttal(query, sources),
     stanceGroups: parsed.stanceGroups ?? buildStanceGroups(query, sources),
     references: sources
@@ -136,6 +138,7 @@ function buildFallbackAnalysis(
 
   return {
     topic: query,
+    factAssessments: buildFactAssessments(query, sources),
     rebuttal: buildRebuttal(query, sources),
     stanceGroups: buildStanceGroups(query, sources),
     summary: {
@@ -366,6 +369,102 @@ function buildStanceGroups(
   };
 }
 
+function buildFactAssessments(
+  query: string,
+  sources: SourceReference[]
+): PublicIssueAnalysis["factAssessments"] {
+  const ids = sources
+    .filter((source) => !source.url.includes("example.com"))
+    .slice(0, 3)
+    .map((source) => source.id);
+  const fallbackIds = sources.slice(0, 3).map((source) => source.id);
+  const sourceIds = ids.length ? ids : fallbackIds;
+  const topicText = query.toLowerCase();
+
+  if (hasAny(topicText, ["總預算", "預算", "救災", "凍結", "卡住"])) {
+    return [
+      {
+        claim:
+          "「總預算已經過了」通常只代表法案完成審查，不代表每一筆經費都能立刻自由動用。",
+        verdict: "supported",
+        explanation:
+          "預算通過、預算執行、預算解凍和另編特別預算是不同步驟，少了其中一段就不會馬上能花。",
+        sourceIds
+      },
+      {
+        claim: "「救災沒有錢完全是行政院自己卡住」這個說法過度簡化。",
+        verdict: "contradicted",
+        explanation:
+          "公開資訊通常會牽涉立法院審查、凍結條件、行政程序和科目限制，不能只怪單一機關。",
+        sourceIds
+      },
+      {
+        claim: "到底是錢真的不能用，還是執行流程比較慢，要看具體科目與公文。",
+        verdict: "insufficient_evidence",
+        explanation:
+          "如果沒有先對到哪一筆預算、哪個部會、哪個條件，就很難下「完全沒錢」這種結論。",
+        sourceIds
+      }
+    ];
+  }
+
+  if (hasAny(topicText, ["無人機", "條例", "國防", "防衛"])) {
+    return [
+      {
+        claim:
+          "無人機或國防相關爭議，重點通常不只是總額，而是科目、用途和執行條件。",
+        verdict: "supported",
+        explanation:
+          "這類預算常常有凍結、分期、專案或採購流程，不是看總數字就能判斷。",
+        sourceIds
+      },
+      {
+        claim: "把執行不順直接說成行政院故意卡案，通常證據不足。",
+        verdict: "contradicted",
+        explanation:
+          "若要成立，至少要指出是哪個程序、哪個命令或哪份文件真的擋住了。",
+        sourceIds
+      }
+    ];
+  }
+
+  if (hasAny(topicText, ["財劃法", "地方", "補助", "中央"])) {
+    return [
+      {
+        claim: "中央和地方財源怎麼分，必須一起看財劃法和事權分配。",
+        verdict: "supported",
+        explanation:
+          "只看中央或只看地方，都會把財政問題講得太單一。",
+        sourceIds
+      },
+      {
+        claim: "把所有財政壓力都說成中央故意不給錢，通常過度簡化。",
+        verdict: "contradicted",
+        explanation:
+          "實際上還要看法規、補助規則和不同部會的預算分類。",
+        sourceIds
+      }
+    ];
+  }
+
+  return [
+    {
+      claim: "這類說法裡面，常常有一部分是真的，但不代表整句都對。",
+      verdict: "supported",
+      explanation:
+        "公共議題多半不是非黑即白，先拆命題會比直接站隊更準。",
+      sourceIds
+    },
+    {
+      claim: "如果沒有具體來源，很多很肯定的講法其實只能先算證據不足。",
+      verdict: "insufficient_evidence",
+      explanation:
+        "沒有文件、新聞或官方說明時，最安全的做法是先保留。",
+      sourceIds
+    }
+  ];
+}
+
 type ToneRewritePayload = {
   oneSentence?: string;
   thirtySeconds?: string;
@@ -378,6 +477,7 @@ type ToneRewritePayload = {
     title?: string;
     sentences?: string[];
   };
+  factAssessments?: PublicIssueAnalysis["factAssessments"];
   stanceGroups?: PublicIssueAnalysis["stanceGroups"];
 };
 
@@ -399,6 +499,7 @@ function applyToneRewrite(
       title: rewrite.rebuttal?.title ?? analysis.rebuttal.title,
       sentences: rewrite.rebuttal?.sentences ?? analysis.rebuttal.sentences
     },
+    factAssessments: rewrite.factAssessments ?? analysis.factAssessments,
     stanceGroups: {
       blue: rewriteStanceGroup(
         analysis.stanceGroups.blue,

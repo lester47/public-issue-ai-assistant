@@ -47,8 +47,21 @@ export type StanceGroup = {
   conclusions: StanceConclusion[];
 };
 
+export type FactAssessmentVerdict =
+  | "supported"
+  | "contradicted"
+  | "insufficient_evidence";
+
+export type FactAssessment = {
+  claim: string;
+  verdict: FactAssessmentVerdict;
+  explanation: string;
+  sourceIds: string[];
+};
+
 export type PublicIssueAnalysis = {
   topic: string;
+  factAssessments: FactAssessment[];
   rebuttal: {
     title: string;
     viewpoints: Array<{
