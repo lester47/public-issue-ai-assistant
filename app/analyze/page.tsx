@@ -40,7 +40,11 @@ export default async function AnalyzePage({ searchParams }: AnalyzePageProps) {
       <Link className="text-link" href="/">
         ← 回到首頁
       </Link>
-      <ResultSections response={response} retryHref={retryHref} />
+      <ResultSections
+        response={response}
+        newQuestionHref="/"
+        retryHref={retryHref}
+      />
     </main>
   );
 }

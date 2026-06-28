@@ -5,6 +5,7 @@ import { SourceList } from "./SourceList";
 
 type ResultSectionsProps = {
   response: AnalyzeIssueResponse;
+  newQuestionHref?: string;
   retryHref?: string;
   onRetry?: () => void;
   isRetrying?: boolean;
@@ -12,6 +13,7 @@ type ResultSectionsProps = {
 
 export function ResultSections({
   response,
+  newQuestionHref,
   retryHref,
   onRetry,
   isRetrying = false
@@ -37,21 +39,30 @@ export function ResultSections({
 
       <div className="answer-strip">
         <p>{data.oneSentence}</p>
-        {canRetry ? (
-          retryHref ? (
-            <a className="retry-button" href={retryHref}>
-              重新搜尋來源
-            </a>
-          ) : (
-            <button
-              className="retry-button"
-              type="button"
-              onClick={onRetry}
-              disabled={isRetrying}
-            >
-              {isRetrying ? "重新搜尋中" : "重新搜尋來源"}
-            </button>
-          )
+        {newQuestionHref || canRetry ? (
+          <div className="result-action-row">
+            {newQuestionHref ? (
+              <a className="new-question-button" href={newQuestionHref}>
+                問下一題
+              </a>
+            ) : null}
+            {canRetry ? (
+              retryHref ? (
+                <a className="retry-button" href={retryHref}>
+                  重新搜尋來源
+                </a>
+              ) : (
+                <button
+                  className="retry-button"
+                  type="button"
+                  onClick={onRetry}
+                  disabled={isRetrying}
+                >
+                  {isRetrying ? "重新搜尋中" : "重新搜尋來源"}
+                </button>
+              )
+            ) : null}
+          </div>
         ) : null}
       </div>
 

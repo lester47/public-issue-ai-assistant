@@ -138,6 +138,7 @@ export function IssueAssistant() {
       {result ? (
         <ResultSections
           response={result}
+          newQuestionHref="/"
           onRetry={() => analyzeQuery(result.meta.query)}
           isRetrying={isLoading}
         />

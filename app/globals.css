@@ -312,13 +312,19 @@ a {
   background: #f9fbfa;
 }
 
+.result-action-row {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.new-question-button,
 .retry-button {
   display: inline-flex;
   width: 100%;
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  margin-top: 12px;
   border: 1px solid #b9d5ce;
   border-radius: 8px;
   padding: 0 14px;
@@ -328,6 +334,12 @@ a {
   font-weight: 800;
   text-decoration: none;
   cursor: pointer;
+}
+
+.new-question-button {
+  color: #fff;
+  border-color: var(--primary);
+  background: var(--primary);
 }
 
 .retry-button:disabled {
@@ -528,6 +540,10 @@ a {
 
   .answer-strip {
     margin: 20px;
+  }
+
+  .result-action-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .accordion > summary {
