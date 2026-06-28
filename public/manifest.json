@@ -1,0 +1,10 @@
+{
+  "name": "AI 公共議題助手",
+  "short_name": "議題助手",
+  "description": "以近期來源協助理解公共議題",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f7f4",
+  "theme_color": "#0f766e",
+  "icons": []
+}
