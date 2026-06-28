@@ -384,37 +384,38 @@ a {
 .stance-card {
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 12px;
   background: #fff;
+  overflow: hidden;
 }
 
 .stance-card.blue {
-  border-color: #bfdbfe;
+  border-color: #2563eb;
   background: #eff6ff;
 }
 
 .stance-card.green {
-  border-color: #bbf7d0;
+  border-color: #16a34a;
   background: #f0fdf4;
 }
 
 .stance-card h3 {
-  margin: 0 0 8px;
-  color: var(--primary-strong);
+  margin: 0;
+  padding: 10px 12px;
+  color: #fff;
   font-size: 1rem;
 }
 
 .stance-card.blue h3 {
-  color: #1d4ed8;
+  background: #2563eb;
 }
 
 .stance-card.green h3 {
-  color: #15803d;
+  background: #16a34a;
 }
 
 .stance-card ol {
   margin: 0;
-  padding-left: 20px;
+  padding: 12px 12px 12px 32px;
 }
 
 .stance-card li {
