@@ -21,7 +21,6 @@ type SpeechRecognitionEvent = {
   resultIndex?: number;
   results: ArrayLike<{
     isFinal?: boolean;
-    length: number;
     0: {
       transcript: string;
     };
@@ -39,11 +38,13 @@ type SpeechWindow = Window & {
 
 type VoiceInputButtonProps = {
   onTranscript: (text: string) => void;
+  onUseKeyboardMic?: () => void;
   disabled?: boolean;
 };
 
 export function VoiceInputButton({
   onTranscript,
+  onUseKeyboardMic,
   disabled
 }: VoiceInputButtonProps) {
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -53,18 +54,29 @@ export function VoiceInputButton({
   const [isListening, setIsListening] = useState(false);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
+  const [isIOS, setIsIOS] = useState(false);
   const [message, setMessage] = useState("");
   const [guide, setGuide] = useState<string[]>([
-    "按住按鈕開始說話。",
-    "可以停一下想下一句；只要手還按著，系統會繼續聽。",
-    "全部說完後放開按鈕，語音接收才會結束。"
+    "電腦 Chrome/Edge：按住按鈕說話，放開才結束。",
+    "iPhone：點文字框後，用鍵盤上的麥克風輸入最穩。",
+    "如果是在 LINE/FB 內建瀏覽器，建議改用 Safari 開啟。"
   ]);
 
   useEffect(() => {
     const speechWindow = window as SpeechWindow;
+    const isiPhoneOrIPad = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    setIsIOS(isiPhoneOrIPad);
     setIsSupported(
       Boolean(speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition)
     );
+
+    if (isiPhoneOrIPad) {
+      setGuide([
+        "請先點文字框，讓 iPhone 鍵盤跳出來。",
+        "按鍵盤上的麥克風開始說話。",
+        "說完按鍵盤上的完成，再按「開始分析」。"
+      ]);
+    }
 
     return () => {
       shouldKeepListeningRef.current = false;
@@ -76,6 +88,11 @@ export function VoiceInputButton({
   async function startHolding(pointerId?: number) {
     if (disabled || isListening || isRequestingPermission) return;
 
+    if (isIOS) {
+      openKeyboardMicGuide();
+      return;
+    }
+
     buttonRef.current?.setPointerCapture?.(pointerId ?? 0);
     shouldKeepListeningRef.current = true;
     transcriptBufferRef.current = "";
@@ -83,12 +100,7 @@ export function VoiceInputButton({
     const Recognition = getRecognitionConstructor();
     if (!Recognition) {
       setIsSupported(false);
-      setMessage("這個瀏覽器不支援按住語音辨識。請用 Chrome/Edge，或點文字框使用手機鍵盤麥克風。");
-      setGuide([
-        "請用 Chrome 或 Edge 開啟 http://localhost:3000/。",
-        "也可以點文字框，直接用手機鍵盤上的麥克風輸入。",
-        "這個瀏覽器可能不支援 Web Speech 語音辨識。"
-      ]);
+      setMessage("這個瀏覽器不支援按鈕語音辨識。請用 Chrome/Edge，或使用手機鍵盤麥克風。");
       return;
     }
 
@@ -96,15 +108,12 @@ export function VoiceInputButton({
     if (!hasPermission || !shouldKeepListeningRef.current) return;
 
     setMessage("正在聽，請繼續說。放開按鈕才會停止。");
-    setGuide([
-      "請持續按住按鈕。",
-      "中間可以停頓，想好第二句再繼續說。",
-      "全部說完後放開按鈕。"
-    ]);
     startRecognition(Recognition);
   }
 
   function stopHolding() {
+    if (isIOS) return;
+
     shouldKeepListeningRef.current = false;
     recognitionRef.current?.stop();
     setIsListening(false);
@@ -115,6 +124,16 @@ export function VoiceInputButton({
     } else if (!isRequestingPermission) {
       setMessage("沒有聽到內容。請按住按鈕再說一次。");
     }
+  }
+
+  function openKeyboardMicGuide() {
+    onUseKeyboardMic?.();
+    setMessage("iPhone 請使用鍵盤上的麥克風。這比網頁按鈕語音更穩。");
+    setGuide([
+      "文字框已經幫你點開。",
+      "請按 iPhone 鍵盤右下角或左下角的麥克風。",
+      "說完後按完成，再按「開始分析」。"
+    ]);
   }
 
   function startRecognition(Recognition: SpeechRecognitionConstructor) {
@@ -167,12 +186,13 @@ export function VoiceInputButton({
       setIsListening(false);
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
         shouldKeepListeningRef.current = false;
-        setMessage("麥克風權限被封鎖。請按網址列旁的權限圖示，允許麥克風後再試。");
+        setMessage("瀏覽器允許麥克風，但不允許網頁語音轉文字。請改用鍵盤上的麥克風。");
         setGuide([
-          "請看網址列左邊或右邊的權限/設定圖示。",
-          "找到「麥克風」並改成「允許」。",
-          "重新整理頁面後，再按住語音按鈕說話。"
+          "點文字框，讓鍵盤跳出來。",
+          "按鍵盤上的麥克風說話。",
+          "這是 iPhone 上最穩定的語音輸入方式。"
         ]);
+        onUseKeyboardMic?.();
         return;
       }
 
@@ -204,11 +224,6 @@ export function VoiceInputButton({
     } catch {
       shouldKeepListeningRef.current = false;
       setMessage("沒有取得麥克風權限。請在瀏覽器網址列旁的權限設定允許麥克風。");
-      setGuide([
-        "請看網址列旁邊的權限/設定圖示。",
-        "把「麥克風」從封鎖改成允許。",
-        "重新整理頁面，再按住語音按鈕說話。"
-      ]);
       return false;
     } finally {
       setIsRequestingPermission(false);
@@ -258,16 +273,20 @@ export function VoiceInputButton({
         aria-pressed={isListening}
       >
         <span aria-hidden="true">{isListening ? "■" : "🎤"}</span>
-        {isListening
-          ? "放開結束"
-          : isRequestingPermission
-            ? "等待授權"
-            : "按住說話"}
+        {isIOS
+          ? "打開鍵盤麥克風"
+          : isListening
+            ? "放開結束"
+            : isRequestingPermission
+              ? "等待授權"
+              : "按住說話"}
       </button>
       {message ? <p role="status">{message}</p> : null}
-      {!isSupported ? <p role="status">目前瀏覽器不支援按鈕語音輸入。</p> : null}
+      {!isSupported && !isIOS ? (
+        <p role="status">目前瀏覽器不支援按鈕語音輸入。</p>
+      ) : null}
       <div className="voice-guide" aria-label="語音輸入引導">
-        <strong>按住說話模式</strong>
+        <strong>{isIOS ? "iPhone 語音輸入" : "按住說話模式"}</strong>
         <ol>
           {guide.map((step) => (
             <li key={step}>{step}</li>

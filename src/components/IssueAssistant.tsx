@@ -86,7 +86,11 @@ export function IssueAssistant() {
         />
 
         <div className="actions">
-          <VoiceInputButton onTranscript={setQuery} disabled={isLoading} />
+          <VoiceInputButton
+            onTranscript={setQuery}
+            onUseKeyboardMic={() => textareaRef.current?.focus()}
+            disabled={isLoading}
+          />
           <button className="primary-button" type="submit" disabled={isLoading}>
             {isLoading ? "分析中" : "開始分析"}
           </button>
