@@ -7,6 +7,7 @@ import { QueryPlanner } from "@/services/workflow/queryPlanner";
 import { SearchRanker } from "@/services/workflow/searchRanker";
 import { SearchService } from "@/services/workflow/searchService";
 import { TimelineBuilder } from "@/services/workflow/timelineBuilder";
+import { rewritePublicIssueAnalysisTone } from "@/services/llm/openaiResponsesClient";
 import type { AnalyzeIssueResponse } from "@/types/publicIssue";
 
 const SEARCH_WINDOW_DAYS = 28;
@@ -37,10 +38,11 @@ export async function analyzePublicIssue(
     uncertain,
     positions
   });
+  const rewrittenData = await rewritePublicIssueAnalysisTone(query, data);
 
   return {
     ok: true,
-    data,
+    data: rewrittenData,
     meta: {
       query,
       searchedAt,

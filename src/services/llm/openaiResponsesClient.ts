@@ -1,4 +1,9 @@
-import { PUBLIC_ISSUE_SYSTEM_PROMPT, buildPublicIssueUserPrompt } from "@/prompts/publicIssue";
+import {
+  PUBLIC_ISSUE_SYSTEM_PROMPT,
+  PUBLIC_ISSUE_TONE_REWRITE_SYSTEM_PROMPT,
+  buildPublicIssueToneRewritePrompt,
+  buildPublicIssueUserPrompt
+} from "@/prompts/publicIssue";
 import type { PublicIssueAnalysis, SourceReference } from "@/types/publicIssue";
 
 type OpenAIResponsesPayload = {
@@ -53,6 +58,49 @@ export async function generatePublicIssueAnalysis(
     stanceGroups: parsed.stanceGroups ?? buildStanceGroups(query, sources),
     references: sources
   };
+}
+
+export async function rewritePublicIssueAnalysisTone(
+  query: string,
+  analysis: PublicIssueAnalysis
+): Promise<PublicIssueAnalysis> {
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  if (!apiKey) {
+    return analysis;
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL ?? "gpt-5.1",
+        instructions: PUBLIC_ISSUE_TONE_REWRITE_SYSTEM_PROMPT,
+        input: buildPublicIssueToneRewritePrompt(query, analysis),
+        text: {
+          format: {
+            type: "json_object"
+          }
+        }
+      })
+    });
+
+    if (!response.ok) {
+      return analysis;
+    }
+
+    const payload = (await response.json()) as OpenAIResponsesPayload;
+    const rawText = extractResponseText(payload);
+    const parsed = JSON.parse(rawText) as ToneRewritePayload;
+
+    return applyToneRewrite(analysis, parsed);
+  } catch {
+    return analysis;
+  }
 }
 
 function extractResponseText(payload: OpenAIResponsesPayload): string {
@@ -315,6 +363,66 @@ function buildStanceGroups(
         }
       ]
     }
+  };
+}
+
+type ToneRewritePayload = {
+  oneSentence?: string;
+  thirtySeconds?: string;
+  summary?: {
+    short?: string;
+    medium?: string;
+    detailed?: string;
+  };
+  rebuttal?: {
+    title?: string;
+    sentences?: string[];
+  };
+  stanceGroups?: PublicIssueAnalysis["stanceGroups"];
+};
+
+function applyToneRewrite(
+  analysis: PublicIssueAnalysis,
+  rewrite: ToneRewritePayload
+): PublicIssueAnalysis {
+  return {
+    ...analysis,
+    oneSentence: rewrite.oneSentence ?? analysis.oneSentence,
+    thirtySeconds: rewrite.thirtySeconds ?? analysis.thirtySeconds,
+    summary: {
+      short: rewrite.summary?.short ?? analysis.summary.short,
+      medium: rewrite.summary?.medium ?? analysis.summary.medium,
+      detailed: rewrite.summary?.detailed ?? analysis.summary.detailed
+    },
+    rebuttal: {
+      ...analysis.rebuttal,
+      title: rewrite.rebuttal?.title ?? analysis.rebuttal.title,
+      sentences: rewrite.rebuttal?.sentences ?? analysis.rebuttal.sentences
+    },
+    stanceGroups: {
+      blue: rewriteStanceGroup(
+        analysis.stanceGroups.blue,
+        rewrite.stanceGroups?.blue
+      ),
+      green: rewriteStanceGroup(
+        analysis.stanceGroups.green,
+        rewrite.stanceGroups?.green
+      )
+    }
+  };
+}
+
+function rewriteStanceGroup(
+  original: PublicIssueAnalysis["stanceGroups"]["blue"],
+  rewrite?: PublicIssueAnalysis["stanceGroups"]["blue"]
+) {
+  return {
+    ...original,
+    label: rewrite?.label ?? original.label,
+    conclusions: original.conclusions.map((item, index) => ({
+      statement: rewrite?.conclusions?.[index]?.statement ?? item.statement,
+      sourceIds: item.sourceIds
+    }))
   };
 }
 

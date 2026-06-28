@@ -14,6 +14,20 @@ export const PUBLIC_ISSUE_SYSTEM_PROMPT = `
 7. 只能使用提供的來源，不可自行新增來源。
 `.trim();
 
+export const PUBLIC_ISSUE_TONE_REWRITE_SYSTEM_PROMPT = `
+你是一位中文改寫助理。
+你的工作不是改變事實，而是把既有內容改得更自然、更接地氣、比較像台灣人平常會講的話。
+
+原則：
+1. 不可新增或刪除事實。
+2. 不可改變立場與結論方向。
+3. 不可捏造來源，不可改動 sourceIds。
+4. 口氣要自然、口語、清楚、像真人在說話，不要官腔。
+5. 不要太長，不要空話，不要文謅謅。
+6. 保持原本的結構、句數與分類。
+7. 若原句已經夠自然，只做輕微修飾。
+`.trim();
+
 export function buildPublicIssueUserPrompt(
   query: string,
   sources: SourceReference[]
@@ -120,5 +134,87 @@ ${sourceBlock || "沒有可用來源。"}
 }
 
 references 欄位請保留空陣列，系統會用搜尋結果填回完整來源。
+`.trim();
+}
+
+export function buildPublicIssueToneRewritePrompt(
+  query: string,
+  analysis: {
+    topic: string;
+    oneSentence: string;
+    thirtySeconds: string;
+    summary: {
+      short: string;
+      medium: string;
+      detailed: string;
+    };
+    rebuttal: {
+      title: string;
+      sentences: string[];
+    };
+    stanceGroups: {
+      blue: {
+        label: string;
+        conclusions: Array<{
+          statement: string;
+          sourceIds: string[];
+        }>;
+      };
+      green: {
+        label: string;
+        conclusions: Array<{
+          statement: string;
+          sourceIds: string[];
+        }>;
+      };
+    };
+  }
+) {
+  return `
+使用者問題：
+${query}
+
+目前內容：
+${JSON.stringify(analysis, null, 2)}
+
+請把內容改寫得更自然、更接地氣、更像台灣人平常會講的話。
+只改文字口氣，不改事實、不改 sourceIds、不改分類數量，不要新增新的意思。
+
+請輸出純 JSON，格式如下：
+{
+  "oneSentence": "string",
+  "thirtySeconds": "string",
+  "summary": {
+    "short": "string",
+    "medium": "string",
+    "detailed": "string"
+  },
+  "rebuttal": {
+    "title": "string",
+    "sentences": ["string"]
+  },
+  "stanceGroups": {
+    "blue": {
+      "label": "string",
+      "conclusions": [
+        {
+          "statement": "string",
+          "sourceIds": ["source-1"]
+        }
+      ]
+    },
+    "green": {
+      "label": "string",
+      "conclusions": [
+        {
+          "statement": "string",
+          "sourceIds": ["source-1"]
+        }
+      ]
+    }
+  }
+}
+
+請保留原本的 sourceIds，不要改動數量與順序。
 `.trim();
 }
