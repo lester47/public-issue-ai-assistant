@@ -1,18 +1,18 @@
 import { GoogleNewsRssProvider } from "./googleNewsRssProvider";
-import { MockSearchProvider } from "./mockSearchProvider";
 import { TavilySearchProvider } from "./tavilySearchProvider";
 import type { SearchProvider } from "./types";
 
-export function createSearchProvider(): SearchProvider {
+export function createSearchProviders(): SearchProvider[] {
   const tavilyApiKey = process.env.TAVILY_API_KEY;
+  const providers: SearchProvider[] = [];
 
   if (tavilyApiKey) {
-    return new TavilySearchProvider(tavilyApiKey);
+    providers.push(new TavilySearchProvider(tavilyApiKey));
   }
 
   if (process.env.DISABLE_KEYLESS_SEARCH !== "true") {
-    return new GoogleNewsRssProvider();
+    providers.push(new GoogleNewsRssProvider());
   }
 
-  return new MockSearchProvider();
+  return providers;
 }
