@@ -7,6 +7,10 @@ type ResultSectionsProps = {
 
 export function ResultSections({ response }: ResultSectionsProps) {
   const { data, meta } = response;
+  const rebuttalConclusion =
+    data.rebuttal.sentences[0] ||
+    data.rebuttal.viewpoints[0]?.counterPoint ||
+    data.oneSentence;
 
   return (
     <section className="results" aria-live="polite">
@@ -25,23 +29,8 @@ export function ResultSections({ response }: ResultSectionsProps) {
       </div>
 
       <section className="rebuttal-box">
-        <p className="eyebrow">{data.rebuttal.title}</p>
-        {data.rebuttal.viewpoints.length > 0 ? (
-          <div className="viewpoint-list">
-            {data.rebuttal.viewpoints.map((viewpoint) => (
-              <article key={viewpoint.counterPoint}>
-                <strong>{viewpoint.counterPoint}</strong>
-                <p>反駁的是：{viewpoint.targetClaim}</p>
-                <p>{viewpoint.whyItMatters}</p>
-              </article>
-            ))}
-          </div>
-        ) : null}
-        <ol>
-          {data.rebuttal.sentences.map((sentence) => (
-            <li key={sentence}>{sentence}</li>
-          ))}
-        </ol>
+        <p className="eyebrow">一句話結論</p>
+        <p className="rebuttal-conclusion">{rebuttalConclusion}</p>
         {data.rebuttal.sourceIds.length > 0 ? (
           <small>來源：{data.rebuttal.sourceIds.join(", ")}</small>
         ) : null}
