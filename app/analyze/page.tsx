@@ -5,8 +5,12 @@ import { analyzePublicIssue } from "@/services/analysis/publicIssueAnalyzer";
 type AnalyzePageProps = {
   searchParams: Promise<{
     query?: string;
+    retry?: string;
   }>;
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function AnalyzePage({ searchParams }: AnalyzePageProps) {
   const params = await searchParams;
@@ -29,13 +33,14 @@ export default async function AnalyzePage({ searchParams }: AnalyzePageProps) {
   }
 
   const response = await analyzePublicIssue(query);
+  const retryHref = `/analyze?query=${encodeURIComponent(query)}&retry=${Date.now()}`;
 
   return (
     <main className="app-shell">
       <Link className="text-link" href="/">
         ← 回到首頁
       </Link>
-      <ResultSections response={response} />
+      <ResultSections response={response} retryHref={retryHref} />
     </main>
   );
 }

@@ -5,6 +5,9 @@ import type {
 } from "@/types/publicIssue";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as Partial<AnalyzeIssueRequest>;

@@ -1,16 +1,27 @@
+"use client";
+
 import type { AnalyzeIssueResponse } from "@/types/publicIssue";
 import { SourceList } from "./SourceList";
 
 type ResultSectionsProps = {
   response: AnalyzeIssueResponse;
+  retryHref?: string;
+  onRetry?: () => void;
+  isRetrying?: boolean;
 };
 
-export function ResultSections({ response }: ResultSectionsProps) {
+export function ResultSections({
+  response,
+  retryHref,
+  onRetry,
+  isRetrying = false
+}: ResultSectionsProps) {
   const { data, meta } = response;
   const rebuttalConclusion =
     data.rebuttal.sentences[0] ||
     data.rebuttal.viewpoints[0]?.counterPoint ||
     data.oneSentence;
+  const canRetry = meta.usedFallback && (Boolean(retryHref) || Boolean(onRetry));
 
   return (
     <section className="results" aria-live="polite">
@@ -26,6 +37,22 @@ export function ResultSections({ response }: ResultSectionsProps) {
 
       <div className="answer-strip">
         <p>{data.oneSentence}</p>
+        {canRetry ? (
+          retryHref ? (
+            <a className="retry-button" href={retryHref}>
+              重新搜尋來源
+            </a>
+          ) : (
+            <button
+              className="retry-button"
+              type="button"
+              onClick={onRetry}
+              disabled={isRetrying}
+            >
+              {isRetrying ? "重新搜尋中" : "重新搜尋來源"}
+            </button>
+          )
+        ) : null}
       </div>
 
       <section className="rebuttal-box">

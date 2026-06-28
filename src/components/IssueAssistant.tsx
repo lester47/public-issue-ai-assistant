@@ -21,9 +21,8 @@ export function IssueAssistant() {
     setQuery(event.currentTarget.value);
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const currentQuery = (textareaRef.current?.value ?? query).trim();
+  async function analyzeQuery(inputQuery?: string) {
+    const currentQuery = (inputQuery ?? textareaRef.current?.value ?? query).trim();
 
     if (currentQuery.length < 2) {
       setError("請輸入至少 2 個字的公共議題。");
@@ -40,7 +39,11 @@ export function IssueAssistant() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ query: currentQuery })
+        cache: "no-store",
+        body: JSON.stringify({
+          query: currentQuery,
+          retry: Date.now()
+        })
       });
       const payload = (await response.json()) as AnalyzeIssueApiResponse;
 
@@ -55,6 +58,11 @@ export function IssueAssistant() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await analyzeQuery();
   }
 
   return (
@@ -127,7 +135,13 @@ export function IssueAssistant() {
         </section>
       ) : null}
 
-      {result ? <ResultSections response={result} /> : null}
+      {result ? (
+        <ResultSections
+          response={result}
+          onRetry={() => analyzeQuery(result.meta.query)}
+          isRetrying={isLoading}
+        />
+      ) : null}
     </main>
   );
 }

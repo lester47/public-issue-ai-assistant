@@ -18,9 +18,7 @@ export class GoogleNewsRssProvider implements SearchProvider {
       headers: {
         "User-Agent": "PublicIssueAssistant/0.1"
       },
-      next: {
-        revalidate: 900
-      }
+      cache: "no-store"
     });
 
     if (!response.ok) {
